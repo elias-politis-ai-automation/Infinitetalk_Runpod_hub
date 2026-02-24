@@ -435,6 +435,36 @@ def handler(job):
         logger.warning("⚠️ 경고: WanVideoSampler 노드를 찾을 수 없습니다. 워크플로우 기본값을 사용합니다.")
     # ------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # 동적 Attention Mode 설정
+    # ------------------------------------------------------------------
+    # 1. 입력에서 attention_mode 읽기 (기본값 설정 안함: 워크플로우 기본값 'sageattn' 유지)
+    attention_mode = job_input.get("attention_mode")
+    if attention_mode:
+        logger.info(f"🔧 설정: attention_mode={attention_mode}")
+
+        # 2. WanVideoModelLoader 노드에 attention_mode 파라미터 주입
+        loader_node_id = None
+        preferred_loader_id = "122"
+
+        # 효율성을 위해 먼저 선호 ID(122) 확인
+        if preferred_loader_id in prompt and prompt[preferred_loader_id].get("class_type") == "WanVideoModelLoader":
+            loader_node_id = preferred_loader_id
+        else:
+            # ID가 다른 경우 class type으로 검색 (폴백)
+            for node_id, node_data in prompt.items():
+                if node_data.get("class_type") == "WanVideoModelLoader":
+                    loader_node_id = node_id
+                    break
+
+        if loader_node_id:
+            inputs = prompt[loader_node_id].setdefault("inputs", {})
+            inputs["attention_mode"] = attention_mode
+            logger.info(f"✅ 노드 {loader_node_id} (WanVideoModelLoader) 업데이트됨: attention_mode={attention_mode}")
+        else:
+            logger.warning("⚠️ 경고: WanVideoModelLoader 노드를 찾을 수 없습니다. 워크플로우 기본값을 사용합니다.")
+    # ------------------------------------------------------------------
+
     # 파일 존재 여부 확인
     if not os.path.exists(media_path):
         logger.error(f"미디어 파일이 존재하지 않습니다: {media_path}")

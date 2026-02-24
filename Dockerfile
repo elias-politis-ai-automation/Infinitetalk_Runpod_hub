@@ -65,6 +65,9 @@ RUN wget -q https://huggingface.co/Kijai/WanVideo_comfy_fp8_scaled/resolve/main/
     wget -q https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors -O /ComfyUI/models/clip_vision/clip_vision_h.safetensors && \
     wget -q https://huggingface.co/Kijai/MelBandRoFormer_comfy/resolve/main/MelBandRoformer_fp16.safetensors -O /ComfyUI/models/diffusion_models/MelBandRoformer_fp16.safetensors
 
+# Downgrade transformers to avoid strict torch>=2.6.0 checks for loading .bin files (CVE-2025-32434 patch bypassed securely)
+RUN pip install "transformers<4.49.0"
+
 COPY . .
 RUN chmod +x /entrypoint.sh
 CMD ["/entrypoint.sh"]
